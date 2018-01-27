@@ -1,0 +1,109 @@
+---
+title: 'MSDS-692: Data Science Practicum I'
+subtitle: 'Data Ingest From S3'
+author: "Thomas Skowronek"
+date: "January 27, 2018"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10, fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 85)
+```
+\newline
+
+
+## Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(downloader)
+```
+\newline
+
+
+## Download the Data Driven training set values from S3
+The independent variables for the training set
+```{r download-training-set-values}
+# URL of dataset
+data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/4910797b-ee55-40a7-8668-10efd5c1b960.csv"
+
+# File name of dataset
+file.name <- "./data/src-training-set-values.csv"
+
+# Download the file if it doesn't exist
+if( !file.exists(file.name) ) {
+    download(data.url, dest = file.name, mode = "wb")
+}
+
+```
+\newline
+
+
+## Download the Data Driven training set labels from S3
+The dependent variable (status_group) for each of the rows in Training set values
+```{r download-training-set-labels}
+# URL of dataset
+data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/0bf8bc6e-30d0-4c50-956a-603fc693d966.csv"
+
+# File name of dataset
+file.name <- "./data/src-training-set-labels.csv"
+
+# Download the file if it doesn't exist
+if( !file.exists(file.name) ) {
+    download(data.url, dest = file.name, mode = "wb")
+}
+
+```
+\newline
+
+
+## Download the Data Driven test set values from S3
+The independent variables that need predictions
+```{r download-test-set-values}
+# URL of dataset
+data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/702ddfc5-68cd-4d1d-a0de-f5f566f76d91.csv"
+
+# File name of dataset
+file.name <- "./data/src-test-set-values.csv"
+
+# Download the file if it doesn't exist
+if( !file.exists(file.name) ) {
+    download(data.url, dest = file.name, mode = "wb")
+}
+
+```
+\newline
+
+
+## Confirm files were downloaded
+```{r confirm-download}
+list.files("./data")
+
+file.size("./data/src-training-set-values.csv")
+file.size("./data/src-training-set-labels.csv")
+file.size("./data/src-test-set-values.csv")
+```
