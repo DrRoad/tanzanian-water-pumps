@@ -31,3 +31,14 @@ vignettes/*.pdf
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# Data directory
+/data/
+
+# R Notebook output files
+*.html
