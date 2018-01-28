@@ -1,0 +1,105 @@
+---
+title: 'MSDS-692: Data Science Practicum I'
+subtitle: 'Exploratory Data Analysis'
+author: "Thomas Skowronek"
+date: "January 27, 2018"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10, fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 85)
+```
+\newline
+
+
+## Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(ggplot2)
+```
+\newline
+
+
+## Load the Datasets
+```{r load-data}
+train.values <- read.csv("./data/src-training-set-values.csv", header = TRUE)
+train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
+test.values <- read.csv("./data/src-test-set-values.csv", header = TRUE)
+```
+
+
+## Inspect the Structure of the Datasets
+```{r inspect-structure}
+str(train.values)
+str(train.labels)
+str(test.values)
+```
+
+
+## Convert data types
+```{r data-conversion}
+# Convert the training values
+train.values$date_recorded <- as.Date(train.values$date_recorded)
+train.values$funder <- as.character(train.values$funder)
+train.values$installer <- as.character(train.values$installer)
+train.values$wpt_name <- as.character(train.values$wpt_name)
+train.values$basin <- as.factor(train.values$basin)
+train.values$subvillage <- as.character(train.values$subvillage)
+train.values$region_code <- as.factor(train.values$region_code)
+train.values$district_code <- as.factor(train.values$district_code)
+train.values$ward <- as.character(train.values$ward)
+train.values$scheme_name <- as.character(train.values$scheme_name)
+train.values$construction_year <- as.factor(train.values$construction_year)
+
+# Convert the training labels
+train.labels$status_group <- as.factor(train.labels$status_group)
+
+# Convert the test values
+test.values$date_recorded <- as.Date(test.values$date_recorded)
+test.values$funder <- as.character(test.values$funder)
+test.values$installer <- as.character(test.values$installer)
+test.values$wpt_name <- as.character(test.values$wpt_name)
+test.values$basin <- as.factor(test.values$basin)
+test.values$subvillage <- as.character(test.values$subvillage)
+test.values$region_code <- as.factor(test.values$region_code)
+test.values$district_code <- as.factor(test.values$district_code)
+test.values$ward <- as.character(test.values$ward)
+test.values$scheme_name <- as.character(test.values$scheme_name)
+test.values$construction_year <- as.factor(test.values$construction_year)
+```
+
+
+## Review the data type changes
+```{r reinspect-structure}
+str(train.values)
+str(train.labels)
+str(test.values)
+```
+
+
