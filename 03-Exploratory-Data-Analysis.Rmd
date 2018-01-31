@@ -1,6 +1,6 @@
 ---
 title: 'MSDS-692: Data Science Practicum I'
-subtitle: 'Data Processing'
+subtitle: 'Exploratory Data Analysis'
 author: "Thomas Skowronek"
 date: "January 27, 2018"
 output:
@@ -38,6 +38,10 @@ rm(list = ls())
 
 # Set the seed for reproducible results
 set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(ggplot2)
 ```
 \newline
 
@@ -91,78 +95,26 @@ set.seed(1009)
 \newline
 
 
-# Data Preperation
-
-## Load the datasets
+# Load the datasets
 ```{r load-data}
-train.values <- read.csv("./data/src-training-set-values.csv", header = TRUE, na.strings = "")
+train.values <- read.csv("./data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
 train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
-test.values <- read.csv("./data/src-test-set-values.csv", header = TRUE, na.strings = "")
+test.values <- read.csv("./data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
 ```
 \newline
 
 
-## Inspect the original structure of the datasets
-```{r inspect-structure}
-str(train.values)
-str(train.labels)
-str(test.values)
+# Analysis
+For the analysis, the training values and labels will be merged, and the exploration will be conducted on the combined dataset.
+
+## Merge the training values and labels
+```{r merge-datasets}
+training.data <- merge(train.values, train.labels)
 ```
 \newline
 
 
-## Convert data types
-```{r data-conversion}
-# Convert the training values
-train.values$date_recorded <- as.Date(train.values$date_recorded)
-train.values$region_code <- as.factor(train.values$region_code)
-train.values$district_code <- as.factor(train.values$district_code)
-train.values$construction_year <- as.factor(train.values$construction_year)
-
-# Convert the training labels
-train.labels$status_group <- as.factor(train.labels$status_group)
-
-# Convert the test values
-test.values$date_recorded <- as.Date(test.values$date_recorded)
-test.values$region_code <- as.factor(test.values$region_code)
-test.values$district_code <- as.factor(test.values$district_code)
-test.values$construction_year <- as.factor(test.values$construction_year)
+## View the summary statistics for the data
+```{r summary-stats}
+summary(training.data)
 ```
-\newline
-
-
-## Cleanse attribute data
-```{r data-cleanse}
-missing.values <- c("none", "0", "-")
-
-train.values$funder[tolower(train.values$funder) %in% missing.values] <- NA
-train.values$installer[tolower(train.values$installer) %in% missing.values] <- NA
-train.values$wpt_name[tolower(train.values$wpt_name) %in% missing.values] <- NA
-train.values$construction_year[tolower(train.values$construction_year) %in% missing.values] <- NA
-
-test.values$funder[tolower(test.values$funder) %in% missing.values] <- NA
-test.values$installer[tolower(test.values$installer) %in% missing.values] <- NA
-test.values$wpt_name[tolower(test.values$wpt_name) %in% missing.values] <- NA
-test.values$construction_year[tolower(test.values$construction_year) %in% missing.values] <- NA
-```
-
-
-## Review the data type changes
-```{r reinspect-structure}
-str(train.values)
-str(train.labels)
-str(test.values)
-```
-\newline
-
-
-## Write out the cleansed data
-```{r write-data}
-write.csv(train.values, file = "./data/clean-training-set-values.csv", row.names=FALSE)
-write.csv(test.values, file = "./data/clean-test-set-values.csv", row.names=FALSE)
-```
-
-
-
-
-
