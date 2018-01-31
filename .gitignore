@@ -42,3 +42,6 @@ vignettes/*.pdf
 
 # R Notebook output files
 *.html
+
+# Mac files
+.DS_Store
