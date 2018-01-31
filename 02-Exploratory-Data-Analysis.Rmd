@@ -27,7 +27,7 @@ options(width = 85)
 \newline
 
 
-## Setup
+# Setup
 Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
 ```{r env-config, warning=FALSE, message=FALSE}
 # Set the working directory
@@ -38,15 +38,11 @@ rm(list = ls())
 
 # Set the seed for reproducible results
 set.seed(1009)
-
-# Load libraries
-library(dplyr)
-library(ggplot2)
 ```
 \newline
 
 
-## Attribute Definitions:
+# Attribute Definitions:
 * id - Well identifier
 * amount_tsh - Total static head (amount water available to waterpoint)
 * date_recorded - The date the row was entered
@@ -88,38 +84,39 @@ library(ggplot2)
 * waterpoint_type - The kind of waterpoint
 * waterpoint_type_group - The kind of waterpoint
 * status_group - The operational status of the well
+    + functional - the waterpoint is operational and there are no repairs needed
+    + functional needs repair - the waterpoint is operational, but needs repairs
+    + non functional - the waterpoint is not operational
+
+\newline
 
 
+# Data Preperation
 
-## Load the Datasets
+## Load the datasets
 ```{r load-data}
-train.values <- read.csv("./data/src-training-set-values.csv", header = TRUE)
+train.values <- read.csv("./data/src-training-set-values.csv", header = TRUE, na.strings = "")
 train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
 test.values <- read.csv("./data/src-test-set-values.csv", header = TRUE)
 ```
+\newline
 
 
-## Inspect the original structure of the Datasets
+## Inspect the original structure of the datasets
 ```{r inspect-structure}
 str(train.values)
 str(train.labels)
 str(test.values)
 ```
+\newline
 
 
 ## Convert data types
 ```{r data-conversion}
 # Convert the training values
 train.values$date_recorded <- as.Date(train.values$date_recorded)
-train.values$funder <- as.character(train.values$funder)
-train.values$installer <- as.character(train.values$installer)
-train.values$wpt_name <- as.character(train.values$wpt_name)
-train.values$basin <- as.factor(train.values$basin)
-train.values$subvillage <- as.character(train.values$subvillage)
 train.values$region_code <- as.factor(train.values$region_code)
 train.values$district_code <- as.factor(train.values$district_code)
-train.values$ward <- as.character(train.values$ward)
-train.values$scheme_name <- as.character(train.values$scheme_name)
 train.values$construction_year <- as.factor(train.values$construction_year)
 
 # Convert the training labels
@@ -127,16 +124,26 @@ train.labels$status_group <- as.factor(train.labels$status_group)
 
 # Convert the test values
 test.values$date_recorded <- as.Date(test.values$date_recorded)
-test.values$funder <- as.character(test.values$funder)
-test.values$installer <- as.character(test.values$installer)
-test.values$wpt_name <- as.character(test.values$wpt_name)
-test.values$basin <- as.factor(test.values$basin)
-test.values$subvillage <- as.character(test.values$subvillage)
 test.values$region_code <- as.factor(test.values$region_code)
 test.values$district_code <- as.factor(test.values$district_code)
-test.values$ward <- as.character(test.values$ward)
-test.values$scheme_name <- as.character(test.values$scheme_name)
 test.values$construction_year <- as.factor(test.values$construction_year)
+```
+\newline
+
+
+## Cleanse attribute data
+```{r data-cleanse}
+missing.values <- c("none", "0", "-")
+
+train.values$funder[tolower(train.values$funder) %in% missing.values] <- NA
+train.values$installer[tolower(train.values$installer) %in% missing.values] <- NA
+train.values$wpt_name[tolower(train.values$wpt_name) %in% missing.values] <- NA
+train.values$construction_year[tolower(train.values$construction_year) %in% missing.values] <- NA
+
+test.values$funder[tolower(test.values$funder) %in% missing.values] <- NA
+test.values$installer[tolower(test.values$installer) %in% missing.values] <- NA
+test.values$wpt_name[tolower(test.values$wpt_name) %in% missing.values] <- NA
+test.values$construction_year[tolower(test.values$construction_year) %in% missing.values] <- NA
 ```
 
 
@@ -146,5 +153,15 @@ str(train.values)
 str(train.labels)
 str(test.values)
 ```
+\newline
+
+
+## Write out the cleansed data
+```{r write-data}
+write.csv(train.values, file = "./data/clean-training-set-values.csv", row.names=FALSE)
+```
+
+
+
 
 
