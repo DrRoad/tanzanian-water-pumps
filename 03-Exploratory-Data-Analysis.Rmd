@@ -18,11 +18,11 @@ library(knitr)
 # Set global chunk options: images sizes for html and docx
 output <- opts_knit$get("rmarkdown.pandoc.to")
 
-if (output=="html") opts_chunk$set(fig.width=10, fig.height=6)
+if (output=="html") opts_chunk$set(fig.width=10,  fig.height=6)
 if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
 
 # Set the printable width
-options(width = 85)
+options(width = 95)
 ```
 \newline
 
@@ -42,6 +42,9 @@ set.seed(1009)
 # Load libraries
 library(dplyr)
 library(ggplot2)
+library(ggmap)
+library(scales)
+library(RColorBrewer)
 ```
 \newline
 
@@ -95,7 +98,7 @@ library(ggplot2)
 \newline
 
 
-# Load the datasets
+# Load the Datasets
 ```{r load-data}
 train.values <- read.csv("./data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
 train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
@@ -106,7 +109,6 @@ test.values <- read.csv("./data/clean-test-set-values.csv", header = TRUE, na.st
 
 # Analysis
 For the analysis, the training values and labels will be merged, and the exploration will be conducted on the combined dataset.
-
 ## Merge the training values and labels
 ```{r merge-datasets}
 training.data <- merge(train.values, train.labels)
@@ -114,7 +116,57 @@ training.data <- merge(train.values, train.labels)
 \newline
 
 
-## View the summary statistics for the data
+## View the Summary Statistics
+The following variables contain missing values:
+
+* funder - 4,414
+* installer - 4,435
+* wpt_name - 3,565
+* subvillage - 371
+* scheme_management - 3,877
+* scheme_name - 28,166
+* construction_year - 20,709
+
 ```{r summary-stats}
 summary(training.data)
+```
+\newline
+
+
+## Pump Status Distribution
+An inspection of the pump status group shows that just over half of the water pumps are operational at 54.3%.
+```{r pump-status}
+ggplot(data=training.data, aes(x=status_group)) + 
+    geom_bar(aes(y = (..count..)/sum(..count..)), fill=brewer.pal(3, "Set1"), alpha = 1/2) + 
+    geom_text(aes(y = ((..count..)/sum(..count..)), label = scales::percent((..count..)/sum(..count..))), 
+              stat = "count", vjust = -0.25) +
+    scale_y_continuous(labels = percent) +
+    theme(axis.text.y=element_blank(), axis.ticks=element_blank(), axis.title.y=element_blank()) +
+    ggtitle("Pump Status Distribution") +
+    theme(plot.title = element_text(hjust = 0.5, face="bold")) +
+    xlab("Operational Status") + ylab("Percent")
+```
+\newline
+
+
+## Inspect Categorical Variables
+The next few plots compare categorical variables by pump status groups.
+
+### Water Basins
+Ploting the water pumps by basin and separating them by status shows that the Pangani basin has the most functional water pumps.  The Lake Victoria basin has the highest quantity of water pumps that require repair or are not functional.  In addition, Lake Rukwa, Lake Tanganyika, and Ruvuma / Southern Coast have more non-functional pumps than functional pumps.
+```{r basin-plot}
+ggplot(training.data, aes(x=basin, fill = basin)) + geom_bar(alpha = 1/2) + 
+  scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
+```
+
+
+## Visualize Pumps in Tanzania
+Plot all of the pumps regardless of status group to determine if the are clustered in certain parts of the country.
+```{r  map, warning=FALSE, fig.width=12, fig.height=8}
+# Center of Tanzania
+map <- get_map(c(lon = 34.888822, lat = -6.369028), source = "google", zoom = 6)
+
+ggmap(map) + geom_point(aes(x = longitude, y = latitude, colour = status_group), data = training.data, alpha = .5)
 ```
