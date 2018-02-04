@@ -152,7 +152,7 @@ ggplot(data=training.data, aes(x=status_group)) +
 ## Inspect Categorical Variables
 The next few plots compare categorical variables by pump status groups.
 
-### Water Basins
+### Basins
 Ploting the water pumps by basin and separating them by status shows that the Pangani basin has the most functional water pumps.  The Lake Victoria basin has the highest quantity of water pumps that require repair or are not functional.  In addition, Lake Rukwa, Lake Tanganyika, and Ruvuma / Southern Coast have more non-functional pumps than functional pumps.
 ```{r basin-plot}
 ggplot(training.data, aes(x=basin, fill = basin)) + geom_bar(alpha = 1/2) + 
@@ -160,6 +160,53 @@ ggplot(training.data, aes(x=basin, fill = basin)) + geom_bar(alpha = 1/2) +
   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
   xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
 ```
+\newline
+
+
+### Regions
+XXX.
+```{r region-plot}
+ggplot(training.data, aes(x=region, fill = status_group)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0))
+```
+\newline
+
+
+### Permit
+XXX.
+```{r permit-plot}
+permits <- training.data %>% select(permit, status_group) %>%
+              filter(! is.na(permit))
+
+ggplot(permits, aes(x=permit, fill = permit)) + geom_bar(alpha = 1/2) + 
+  scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Permit"))
+```
+\newline
+
+
+### Extraction Type Class
+XXX.
+```{r extract-class-plot}
+ggplot(training.data, aes(x=extraction_type_class, fill = extraction_type_class)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
+```
+\newline
+
+
+### Payment Type
+XXX.
+```{r payment-type-plot}
+ggplot(training.data, aes(x=payment_type, fill = payment_type)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
+```
+\newline
 
 
 ## Visualize Pumps in Tanzania
