@@ -164,18 +164,23 @@ ggplot(training.data, aes(x=basin, fill = basin)) + geom_bar(alpha = 1/2) +
 
 
 ### Regions
-XXX.
+Comparing the region plot to the region map illustrates that regions where the quantity of non-functional pumps exceed functional pumps are not clustered in a specific part of the country.  These regions include Lindi, Mara, Mtwara, Rukwa, and Tabora.
+
 ```{r region-plot}
 ggplot(training.data, aes(x=region, fill = status_group)) + 
   geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") +
-  theme(axis.text.x=element_text(angle = -45, hjust = 0))
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Status Group"))
 ```
+![Tanzania Region Map](images/Tanzania-Regions.png)
+*Figure 1*. Tanzania region map. Reprinted from Tanzania regions (para. 1).
 \newline
 
 
 ### Permit
-XXX.
+A potential hypothesis is that pumps without permits may not be built to the required standards, and therefore may have a higher amount of pumps needing repair or that are non-funtional.  However, at the following plot depicts, for each pump status group, permitted pumps outnumber non-permitted pumps.
 ```{r permit-plot}
+# Filter out observations with NA
 permits <- training.data %>% select(permit, status_group) %>%
               filter(! is.na(permit))
 
@@ -188,23 +193,23 @@ ggplot(permits, aes(x=permit, fill = permit)) + geom_bar(alpha = 1/2) +
 
 
 ### Extraction Type Class
-XXX.
+Could the pump extraction type class contribute to the pump status group?  As exhibited in the following plot, gravity and handpump extraction have a significantly higher level of functional pumps. In contrast, extraction types of motorpump and other cleary are less reliable.
 ```{r extract-class-plot}
 ggplot(training.data, aes(x=extraction_type_class, fill = extraction_type_class)) + 
   geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
-  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Extraction Type Class"))
 ```
 \newline
 
 
 ### Payment Type
-XXX.
+Is there a relationship
 ```{r payment-type-plot}
 ggplot(training.data, aes(x=payment_type, fill = payment_type)) + 
   geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
-  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Basin"))
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Payment"))
 ```
 \newline
 
@@ -217,3 +222,8 @@ map <- get_map(c(lon = 34.888822, lat = -6.369028), source = "google", zoom = 6)
 
 ggmap(map) + geom_point(aes(x = longitude, y = latitude, colour = status_group), data = training.data, alpha = .5)
 ```
+
+
+# References
+Wikimedia Commons. (2012). Tanzania regions. Retrieved from https://commons.wikimedia.org/wiki/File:Tanzania_regions.svg
+
