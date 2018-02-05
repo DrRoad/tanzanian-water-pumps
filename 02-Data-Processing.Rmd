@@ -165,7 +165,3 @@ write.csv(train.values, file = "./data/clean-training-set-values.csv", row.names
 write.csv(test.values, file = "./data/clean-test-set-values.csv", row.names=FALSE)
 ```
 
-
-
-
-
