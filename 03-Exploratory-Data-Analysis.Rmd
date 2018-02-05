@@ -1,5 +1,5 @@
 ---
-title: 'MSDS-692: Data Science Practicum I'
+title: 'Predicting the Operational Status of Tanzanian Water Pumps'
 subtitle: 'Exploratory Data Analysis'
 author: "Thomas Skowronek"
 date: "January 27, 2018"
