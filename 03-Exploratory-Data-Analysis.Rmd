@@ -99,10 +99,10 @@ library(RColorBrewer)
 
 
 # Load the Datasets
-```{r load-data}
+```{r load-data, cache=TRUE}
 train.values <- read.csv("./data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values$population[train.values$population == 0] <- NA
 train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
-test.values <- read.csv("./data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
 ```
 \newline
 
@@ -133,6 +133,19 @@ summary(training.data)
 \newline
 
 
+## Visualize Pumps in Tanzania
+To begin, pump locations are plotted on a map to get a sense of where they are located and determine if they are clustered in certain parts of the country.  The pumps, regardless of status, are generally located in the same areas.  Although, the Southern tip of Tanzania shows a higher concentration of non-functional pumps.
+```{r  map, warning=FALSE, fig.width=12, fig.height=8, cache=TRUE}
+# Center of Tanzania
+map <- get_map(c(lon = 34.888822, lat = -6.369028), source = "google", zoom = 6)
+
+ggmap(map) + 
+  geom_point(aes(x = longitude, y = latitude, colour = status_group), data = training.data, alpha = 1/2) +
+  scale_colour_brewer(palette = "Set1", name = "Status Group")
+```
+\newline
+
+
 ## Pump Status Distribution
 An inspection of the pump status group shows that just over half of the water pumps are operational at 54.3%.
 ```{r pump-status}
@@ -142,7 +155,6 @@ ggplot(data=training.data, aes(x=status_group)) +
               stat = "count", vjust = -0.25) +
     scale_y_continuous(labels = percent) +
     theme(axis.text.y=element_blank(), axis.ticks=element_blank(), axis.title.y=element_blank()) +
-    ggtitle("Pump Status Distribution") +
     theme(plot.title = element_text(hjust = 0.5, face="bold")) +
     xlab("Operational Status") + ylab("Percent")
 ```
@@ -203,25 +215,108 @@ ggplot(training.data, aes(x=extraction_type_class, fill = extraction_type_class)
 \newline
 
 
-### Payment Type
-Is there a relationship
-```{r payment-type-plot}
-ggplot(training.data, aes(x=payment_type, fill = payment_type)) + 
+### Water Quality Group
+Is there a relationship between the water quality group and pump status?  The following plot demonstrates that the overwhelming majority of pumps are classified as having good water.  Only in the case of the water quality group of "unknown", are there more non-fuctional pumps than functional pumps.
+```{r quality-group-plot}
+ggplot(training.data, aes(x=quality_group, fill = quality_group)) + 
   geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
-  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Payment"))
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Water Quality"))
 ```
 \newline
 
 
-## Visualize Pumps in Tanzania
-Plot all of the pumps regardless of status group to determine if the are clustered in certain parts of the country.
-```{r  map, warning=FALSE, fig.width=12, fig.height=8}
-# Center of Tanzania
-map <- get_map(c(lon = 34.888822, lat = -6.369028), source = "google", zoom = 6)
-
-ggmap(map) + geom_point(aes(x = longitude, y = latitude, colour = status_group), data = training.data, alpha = .5)
+### Water Quantity
+The quantity of water available to a pump, or the lack thereof, could render a pump non-functional.  As the following plot demonstrates, pumps where the water quantity category is dry, have the lowest level of functional pumps.
+```{r quantity-group-plot}
+ggplot(training.data, aes(x=quantity, fill = quantity)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Water Quantity"))
 ```
+\newline
+
+
+### Water Source
+A visual inspection of the water source shows that spring and shallow well account for the majority of water sources.  In addition, upon visual inspection, both categories have the most functional and non-functional pumps.
+```{r source-plot}
+# Extend the Set1 palette
+#set1.plus1 <- colorRampPalette(brewer.pal(9, "Set1"))(10)
+
+# ggplot(training.data, aes(x=source, fill = source)) + 
+#   geom_bar(alpha = 1/2) + scale_fill_manual(values = set1.plus1) + facet_grid(~status_group) +
+#   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+#   xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Water Source"))
+
+ggplot(training.data, aes(x=source, fill = status_group)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Status Group"))
+```
+\newline
+
+
+### Water Point Type
+Examining the water point types provide a discernible majority in the communal standpipe and hand pump categories.  Across all categories, only communal standpipe multiple and other have more non-functional pumps compared to functional pumps.
+```{r wtr-point-type-plot}
+ggplot(training.data, aes(x=waterpoint_type, fill = waterpoint_type)) + 
+  geom_bar(alpha = 1/2) + scale_fill_brewer(palette="Set1") + facet_grid(~status_group) +
+  theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
+  xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Water Point Type"))
+```
+\newline
+
+
+## Inspect Continuous and Discrete Variables
+The next few plots compare continuous and discrete variables by pump status groups.
+
+
+### Population
+The popoluation attribute only contains 39,019 (64.0%) observations with a value greater than zero.  In addition the data is signifcantly skewed.  Taking the natural log of the population aids in correcting the skew into a somewhat normal bell shape.  Future iterations will address options for the observations containing zero.
+```{r population-plot}
+# Filter out observations with NA
+population <- training.data %>% select(population, status_group) %>%
+              filter(! is.na(population))
+dim(population)
+
+ggplot(population, aes(x = log(population))) + 
+  geom_histogram(bins = 30, fill="#377EB8", alpha = 1/2) +
+  facet_grid( ~ status_group) + xlab("Population") + ylab("")
+```
+\newlines
+
+
+### Total Static Head Amount (amount water available to waterpoint)
+The total static head amount variable also contains highly skewed value and a large amount of outliers.
+```{r amount_tsh-plot}
+ggplot(training.data, aes(x=status_group, y=amount_tsh)) + 
+  geom_boxplot(fill="#377EB8") + coord_flip() + xlab("") + ylab("")
+```
+\newline
+
+
+### Construction Year
+Each pump status displays a left-skewed histogram.  Logically, this is reasonable since more pumps will exist over time as populations increase.
+```{r construction-yr-plot}
+# Filter out observations with NA
+constr.year <- training.data %>% select(construction_year, status_group) %>%
+              filter(! is.na(construction_year))
+
+ggplot(constr.year, aes(x = construction_year)) + 
+  geom_histogram(bins = 20, fill="#377EB8", alpha = 1/2) +
+  facet_grid( ~ status_group) + xlab("Year") + ylab("")
+```
+\newline
+
+
+### GPS Height
+
+```{r gps-height-plot}
+ggplot(training.data, aes(x = gps_height)) + 
+  geom_histogram(bins = 30, fill="#377EB8", alpha = 1/2) +
+  facet_grid( ~ status_group) + xlab("Height") + ylab("")
+```
+\newlines
 
 
 # References
