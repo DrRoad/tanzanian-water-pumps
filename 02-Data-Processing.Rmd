@@ -150,15 +150,6 @@ test.values$population[tolower(test.values$population) %in% missing.values] <- N
 \newline
 
 
-## Remove Similar Attributes
-Certain attributes are representd multiple ways in different attributes.  Remove the attributes that essentially represent the same data.
-```{r remove-dup-attrs}
-
-
-```
-\newline
-
-
 ## Review the data type changes
 ```{r reinspect-structure}
 str(train.values)
