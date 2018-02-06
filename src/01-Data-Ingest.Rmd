@@ -52,7 +52,7 @@ The independent variables for the training set
 data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/4910797b-ee55-40a7-8668-10efd5c1b960.csv"
 
 # File name of dataset
-file.name <- "./data/src-training-set-values.csv"
+file.name <- "../data/src-training-set-values.csv"
 
 # Download the file if it doesn't exist
 if( !file.exists(file.name) ) {
@@ -70,7 +70,7 @@ The dependent variable (status_group) for each of the rows in Training set value
 data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/0bf8bc6e-30d0-4c50-956a-603fc693d966.csv"
 
 # File name of dataset
-file.name <- "./data/src-training-set-labels.csv"
+file.name <- "../data/src-training-set-labels.csv"
 
 # Download the file if it doesn't exist
 if( !file.exists(file.name) ) {
@@ -88,7 +88,7 @@ The independent variables that need predictions
 data.url <-"https://s3.amazonaws.com/drivendata/data/7/public/702ddfc5-68cd-4d1d-a0de-f5f566f76d91.csv"
 
 # File name of dataset
-file.name <- "./data/src-test-set-values.csv"
+file.name <- "../data/src-test-set-values.csv"
 
 # Download the file if it doesn't exist
 if( !file.exists(file.name) ) {
@@ -101,9 +101,9 @@ if( !file.exists(file.name) ) {
 
 ## Confirm files were downloaded
 ```{r confirm-download}
-list.files("./data")
+list.files("../data")
 
-file.size("./data/src-training-set-values.csv")
-file.size("./data/src-training-set-labels.csv")
-file.size("./data/src-test-set-values.csv")
+file.size("../data/src-training-set-values.csv")
+file.size("../data/src-training-set-labels.csv")
+file.size("../data/src-test-set-values.csv")
 ```

@@ -95,9 +95,9 @@ set.seed(1009)
 
 ## Load the datasets
 ```{r load-data}
-train.values <- read.csv("./data/src-training-set-values.csv", header = TRUE, na.strings = "")
-train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
-test.values <- read.csv("./data/src-test-set-values.csv", header = TRUE, na.strings = "")
+train.values <- read.csv("../data/src-training-set-values.csv", header = TRUE, na.strings = "")
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
+test.values <- read.csv("../data/src-test-set-values.csv", header = TRUE, na.strings = "")
 ```
 \newline
 
@@ -161,7 +161,7 @@ str(test.values)
 
 ## Write out the cleansed data
 ```{r write-data}
-write.csv(train.values, file = "./data/clean-training-set-values.csv", row.names=FALSE)
-write.csv(test.values, file = "./data/clean-test-set-values.csv", row.names=FALSE)
+write.csv(train.values, file = "../data/clean-training-set-values.csv", row.names=FALSE)
+write.csv(test.values, file = "../data/clean-test-set-values.csv", row.names=FALSE)
 ```
 

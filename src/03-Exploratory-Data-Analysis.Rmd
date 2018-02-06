@@ -100,9 +100,9 @@ library(RColorBrewer)
 
 # Load the Datasets
 ```{r load-data, cache=TRUE}
-train.values <- read.csv("./data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
 train.values$population[train.values$population == 0] <- NA
-train.labels <- read.csv("./data/src-training-set-labels.csv", header = TRUE)
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
 ```
 \newline
 
@@ -184,7 +184,7 @@ ggplot(training.data, aes(x=region, fill = status_group)) +
   theme(axis.text.x=element_text(angle = -45, hjust = 0)) +
   xlab("") + ylab("Pump Count") + guides(fill=guide_legend(title="Status Group"))
 ```
-![Tanzania Region Map](images/Tanzania-Regions.png)
+![Tanzania Region Map](../images/Tanzania-Regions.png)
 *Figure 1*. Tanzania region map. Reprinted from Tanzania regions (para. 1).
 \newline
 
