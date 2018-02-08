@@ -5,7 +5,6 @@ author: "Thomas Skowronek"
 date: "January 27, 2018"
 output:
   html_document: default
-  html_notebook: default
   pdf_document: default
   word_document: default
 ---
