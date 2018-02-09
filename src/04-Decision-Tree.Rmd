@@ -1,0 +1,46 @@
+---
+title: 'Predicting the Operational Status of Tanzanian Water Pumps'
+subtitle: 'Decision Trees'
+author: "Thomas Skowronek"
+date: "February 07, 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10,  fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 95)
+```
+\newline
+
+
+# Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+```
+\newline
