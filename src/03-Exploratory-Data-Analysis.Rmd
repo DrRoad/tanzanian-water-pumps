@@ -100,7 +100,6 @@ library(RColorBrewer)
 # Load the Datasets
 ```{r load-data, cache=TRUE}
 train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
-train.values$population[train.values$population == 0] <- NA
 train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
 ```
 \newline
@@ -276,7 +275,6 @@ The popoluation attribute only contains 39,019 (64.0%) observations with a value
 # Filter out observations with NA
 population <- training.data %>% select(population, status_group) %>%
               filter(! is.na(population))
-dim(population)
 
 ggplot(population, aes(x = log(population))) + 
   geom_histogram(bins = 30, fill="#377EB8", alpha = 1/2) +
