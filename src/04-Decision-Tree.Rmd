@@ -40,7 +40,128 @@ set.seed(1009)
 
 # Load libraries
 library(dplyr)
-library(ggplot2)
-library(RColorBrewer)
+library(C50)
+library(caret)
 ```
 \newline
+
+
+# Load the Datasets
+```{r load-data, cache=TRUE}
+train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values$permit <- as.character(train.values$permit)
+train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
+train.values$permit <- as.factor(train.values$permit)
+train.values$construction_year[is.na(train.values$construction_year)] <- 0
+train.values$population[is.na(train.values$population)] <- 0
+train.values$scheme_management <- as.character(train.values$scheme_management)
+train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
+train.values$scheme_management <- as.factor(train.values$scheme_management)
+
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
+
+# Merge the data values and labels
+training.data <- merge(train.values, train.labels)
+
+# Drop the id attribute
+training.data <- training.data %>% select(-one_of(c("id")))
+```
+\newline
+
+
+# Split the Training Data
+Create training and testing subsets of the data.
+```{r split-data}
+# Create an 80/20 split
+random.idx <- createDataPartition(training.data$status_group, p = .80, list = FALSE)
+pump.train <- training.data[ random.idx, ]
+pump.test <- training.data[-random.idx, ]
+
+# Verify similar proportions of status_group for training vs.testing
+prop.table(table(pump.train$status_group))
+prop.table(table(pump.test$status_group))
+```
+\newline
+
+
+# Decision Tree Model #1
+Create decision tree model using a subset of attributes.
+```{r model-1}
+# Create the model
+pump.model.1 <- C5.0(status_group ~ basin + region + permit + extraction_type_class + 
+                       quality_group + quantity + source + waterpoint_type + population + 
+                       amount_tsh + gps_height + district_code + scheme_management + 
+                       payment + longitude + latitude, 
+                     data = pump.train)
+
+# Inspect the model
+pump.model.1
+#summary(pump.model.1)
+
+# Examine the importance of the predictor attributes
+C5imp(pump.model.1, metric='usage')
+
+# Use the model to create predictions against the test dataset
+pump.predict.1 <- predict(pump.model.1, select(pump.test, -status_group))
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.1, pump.test$status_group, mode = "everything")
+```
+\newline
+
+
+# Decision Tree Model #2
+Create decision tree model using a subset of attributes and decompose the tree into a rule-based model.
+```{r model-2}
+# Create the model
+pump.model.2 <- C5.0(status_group ~ basin + region + permit + extraction_type_class + 
+                       quality_group + quantity + source + waterpoint_type + population + 
+                       amount_tsh + gps_height + district_code + scheme_management + 
+                       payment + longitude + latitude,
+                     data = pump.train, rules = TRUE)
+
+# Inspect the model
+pump.model.2
+#summary(pump.model.2)
+
+# Examine the importance of the predictor attributes
+C5imp(pump.model.2, metric='usage')
+
+# Use the model to create predictions against the test dataset
+pump.predict.2 <- predict(pump.model.2, select(pump.test, -status_group))
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.2, pump.test$status_group, mode = "everything")
+```
+\newline
+
+
+# Decision Tree Model #3
+Create decision tree model using a subset of attributes and a boosted ruleset.
+```{r model-3}
+# Create the model
+pump.model.3 <- C5.0(status_group ~ basin + region + permit + extraction_type_class + 
+                       quality_group + quantity + source + waterpoint_type + population + 
+                       amount_tsh + gps_height + district_code + scheme_management + 
+                       payment + longitude + latitude,
+                     data = pump.train, trials = 10)
+
+# Inspect the model
+pump.model.3
+#summary(pump.model.=3)
+
+# Examine the importance of the predictor attributes
+C5imp(pump.model.3, metric='usage')
+
+# Use the model to create predictions against the test dataset
+pump.predict.3 <- predict(pump.model.3, select(pump.test, -status_group))
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.3, pump.test$status_group, mode = "everything")
+```
+\newline
+
+
+# References
+Kuhn, M. (2013). Classification using C5.0. Retrieved from https://static1.squarespace.com/static/51156277e4b0b8b2ffe11c00/t/51e67b45e4b0e6c130fb4d54/1374059333633/user_C5.0.pdf
+
