@@ -110,6 +110,8 @@ For the analysis, the training values and labels will be merged, and the explora
 ## Merge the training values and labels
 ```{r merge-datasets}
 training.data <- merge(train.values, train.labels)
+
+str(training.data)
 ```
 \newline
 
@@ -123,6 +125,7 @@ The following variables contain missing values:
 * subvillage - 371
 * scheme_management - 3,877
 * scheme_name - 28,166
+* permit - 3056
 * construction_year - 20,709
 
 ```{r summary-stats}
