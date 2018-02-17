@@ -140,6 +140,9 @@ train.values$wpt_name[tolower(train.values$wpt_name) %in% missing.values] <- NA
 train.values$construction_year[tolower(train.values$construction_year) %in% missing.values] <- NA
 train.values$population[tolower(train.values$population) %in% missing.values] <- NA
 
+# Alter observations that contain factor levels not present in the test data
+train.values$scheme_management[tolower(train.values$scheme_management) == "none"] <- NA
+
 test.values$funder[tolower(test.values$funder) %in% missing.values] <- NA
 test.values$installer[tolower(test.values$installer) %in% missing.values] <- NA
 test.values$wpt_name[tolower(test.values$wpt_name) %in% missing.values] <- NA
