@@ -1,0 +1,142 @@
+---
+title: 'Predicting the Operational Status of Tanzanian Water Pumps'
+subtitle: 'XGBoost'
+author: "Thomas Skowronek"
+date: "February 12, 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10,  fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 95)
+```
+\newline
+
+
+# Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(Matrix)
+library(xgboost)
+library(caret)
+```
+\newline
+
+
+# Load the Datasets
+```{r load-data, cache=TRUE}
+train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values$permit <- as.character(train.values$permit)
+train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
+train.values$permit <- as.factor(train.values$permit)
+train.values$construction_year[is.na(train.values$construction_year)] <- 0
+train.values$population[is.na(train.values$population)] <- 0
+train.values$scheme_management <- as.character(train.values$scheme_management)
+train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
+train.values$scheme_management <- as.factor(train.values$scheme_management)
+
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
+
+# Merge the data values and labels
+training.data <- merge(train.values, train.labels)
+
+# Drop the id attribute
+training.data <- training.data %>% select(-one_of(c("id")))
+
+str(training.data)
+summary(training.data)
+
+test.values <- read.csv("../data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
+test.values$permit <- as.character(test.values$permit)
+test.values$permit[is.na(test.values$permit)] <- "UNKNOWN"
+test.values$permit <- as.factor(test.values$permit)
+test.values$construction_year[is.na(test.values$construction_year)] <- 0
+test.values$population[is.na(test.values$population)] <- 0
+test.values$scheme_management <- as.character(test.values$scheme_management)
+test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
+test.values$scheme_management <- as.factor(test.values$scheme_management)
+
+str(test.values)
+summary(test.values)
+```
+\newline
+
+
+# Split the Training Data
+Create training and testing subsets of the data.
+```{r train-test}
+# Create an 80/20 split
+random.idx <- createDataPartition(training.data$status_group, p = .80, list = FALSE)
+
+pump.train <- training.data[ random.idx, ]
+pump.test <- training.data[-random.idx, ]
+
+# Verify similar proportions of status_group for training vs.testing
+prop.table(table(pump.train$status_group))
+prop.table(table(pump.test$status_group))
+```
+\newline
+
+
+# Convert datasets to numeric vectors
+XGboost requires numberic vectors.
+```{r data-conversion}
+predictors <- c("longitude", "latitude", "construction_year", "extraction_type_group",
+                "quality_group", "quantity", "waterpoint_type", "status_group")
+
+# Training data
+train.subset <- pump.train %>% select(predictors)
+train.sparse.matrix <- sparse.model.matrix(status_group ~ .-1, data = train.subset)
+train.output.vector <- ifelse(train.subset$status_group == "functional", 0, 
+                        ifelse(train.subset$status_group == "non functional", 1, 2))
+
+# Testing data
+test.subset <- pump.test %>% select(predictors)
+test.sparse.matrix <- sparse.model.matrix(status_group ~ .-1, data = test.subset)
+test.output.vector <- ifelse(test.subset$status_group == "functional", 0, 
+                        ifelse(test.subset$status_group == "non functional", 1, 2))
+```
+\newline
+
+
+# XGBoost Model #1
+Create xgboost model using a subset of attributes.
+```{r model-1}
+
+pump.model.1 <- xgboost(data = train.sparse.matrix, label = train.output.vector, max_depth = 15, eta = 1, 
+               nthread = 2, nrounds = 25, num_class = 3, objective = "multi:softmax")
+
+# Examine the importance of the predictor attributes
+importance <- xgb.importance(feature_names = colnames(train.sparse.matrix), model = pump.model.1); importance
+
+# Use the model to create predictions against the test dataset
+pump.predict.1 <- predict(pump.model.1, newdata = test.sparse.matrix)
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.1, test.output.vector, mode = "everything")
+```
+\newline
