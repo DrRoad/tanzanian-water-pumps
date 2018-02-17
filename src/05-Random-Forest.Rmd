@@ -58,7 +58,6 @@ train.values$scheme_management <- as.character(train.values$scheme_management)
 train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
 train.values$scheme_management <- as.factor(train.values$scheme_management)
 
-
 train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
 
 # Merge the data values and labels
@@ -69,6 +68,19 @@ training.data <- training.data %>% select(-one_of(c("id")))
 
 str(training.data)
 summary(training.data)
+
+test.values <- read.csv("../data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
+test.values$permit <- as.character(test.values$permit)
+test.values$permit[is.na(test.values$permit)] <- "UNKNOWN"
+test.values$permit <- as.factor(test.values$permit)
+test.values$construction_year[is.na(test.values$construction_year)] <- 0
+test.values$population[is.na(test.values$population)] <- 0
+test.values$scheme_management <- as.character(test.values$scheme_management)
+test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
+test.values$scheme_management <- as.factor(test.values$scheme_management)
+
+str(test.values)
+summary(test.values)
 ```
 \newline
 
@@ -128,11 +140,18 @@ pump.model.2
 importance(pump.model.2)
 varImpPlot(pump.model.2)
 
-# Evaluate the model using a confusion matrix
+# Use the model to create predictions against the test dataset
 pump.predict.2 <- predict(pump.model.2, select(pump.test, -status_group))
 
 # Evaluate the model using a confusion matrix
 confusionMatrix(pump.predict.2, pump.test$status_group, mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.2 <- predict(pump.model.2, select(test.values, -id))
+
+# Create submission for Data Driven
+submission.2 <- data.frame(id = test.values$id, status_group = pump.predict.test.2)
+write.csv(submission.2, file = "../data/random-forest-model-2.csv", row.names=FALSE)
 ```
 
 
