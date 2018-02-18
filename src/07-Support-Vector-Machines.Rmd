@@ -1,0 +1,111 @@
+---
+title: 'Predicting the Operational Status of Tanzanian Water Pumps'
+subtitle: 'Support Vector Machines'
+author: "Thomas Skowronek"
+date: "February 17, 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10,  fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 95)
+```
+\newline
+
+
+# Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(e1071)
+library(caret)
+```
+\newline
+
+
+# Load the Datasets
+```{r load-data, cache=TRUE}
+train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values$permit <- as.character(train.values$permit)
+train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
+train.values$permit <- as.factor(train.values$permit)
+train.values$construction_year[is.na(train.values$construction_year)] <- 0
+train.values$population[is.na(train.values$population)] <- 0
+train.values$scheme_management <- as.character(train.values$scheme_management)
+train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
+train.values$scheme_management <- as.factor(train.values$scheme_management)
+
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
+
+# Merge the data values and labels
+training.data <- merge(train.values, train.labels)
+
+# Drop the id attribute
+training.data <- training.data %>% select(-one_of(c("id")))
+```
+\newline
+
+
+# Split the Training Data
+Create training and testing subsets of the data.
+```{r split-data}
+# Create an 80/20 split
+random.idx <- createDataPartition(training.data$status_group, p = .80, list = FALSE)
+pump.train <- training.data[ random.idx, ]
+pump.test <- training.data[-random.idx, ]
+
+# Verify similar proportions of status_group for training vs.testing
+prop.table(table(pump.train$status_group))
+prop.table(table(pump.test$status_group))
+
+predictors <- c("longitude", "latitude", "construction_year", "extraction_type_group",
+                "quality_group", "quantity", "waterpoint_type", "status_group")
+
+# Subsetting the attributes because attributes that are not used and contain NA affect predictions
+train.subset <- pump.train %>% select(predictors)
+test.subset <- pump.test %>% select(predictors)
+```
+\newline
+
+
+# SVM Model #1
+Create SVM model using a subset of attributes.
+```{r model-1}
+pump.model.1 <- svm(status_group ~ longitude + latitude + extraction_type_group + construction_year + 
+                      quality_group + quantity + waterpoint_type, data=train.subset)
+
+# Inspect the model
+summary(pump.model.1)
+
+# Use the model to create predictions against the test dataset
+pump.predict.1 <- predict(pump.model.1, newdata = select(test.subset, -status_group))
+summary(pump.predict.1)
+
+#pump.predict.1[1] <- "functional needs repair"
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(table(pump.predict.1, pump.test$status_group), mode = "everything")
+```
