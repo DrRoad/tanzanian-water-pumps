@@ -1,0 +1,128 @@
+---
+title: 'Predicting the Operational Status of Tanzanian Water Pumps'
+subtitle: 'H2O.ai Deep Learning'
+author: "Thomas Skowronek"
+date: "February 18, 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r setup-layout, cache=FALSE, echo=FALSE}
+# Define the report layout.
+library(knitr)
+
+# Set global chunk options: images sizes for html and docx
+output <- opts_knit$get("rmarkdown.pandoc.to")
+
+if (output=="html") opts_chunk$set(fig.width=10,  fig.height=6)
+if (output=="docx") opts_chunk$set(fig.width=10,  fig.height=6)
+
+# Set the printable width
+options(width = 95)
+```
+\newline
+
+
+# Setup
+Set the working directory, clear all existing objects in the workspace and set the seed for reproducibility.  Lastly, load the necessary libraries.
+```{r env-config, warning=FALSE, message=FALSE}
+# Set the working directory
+setwd("./")
+
+# Clear all existing objects in the workspace
+rm(list = ls())
+
+# Set the seed for reproducible results
+set.seed(1009)
+
+# Load libraries
+library(dplyr)
+library(h2o)
+library(caret)
+library(ROCR)
+```
+\newline
+
+
+# Load the Datasets
+```{r load-data, cache=TRUE}
+train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
+train.values$permit <- as.character(train.values$permit)
+train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
+train.values$permit <- as.factor(train.values$permit)
+train.values$construction_year[is.na(train.values$construction_year)] <- 0
+train.values$population[is.na(train.values$population)] <- 0
+train.values$scheme_management <- as.character(train.values$scheme_management)
+train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
+train.values$scheme_management <- as.factor(train.values$scheme_management)
+
+train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
+
+# Merge the data values and labels
+training.data <- merge(train.values, train.labels)
+
+# Drop the id attribute
+training.data <- training.data %>% select(-one_of(c("id")))
+```
+\newline
+
+
+# H2O setup
+```{r h20}
+# Disable progress bars for Rmd
+h2o.no_progress()  
+
+# Initialize and connect to H2O
+local.h20 <- h2o.init()
+
+
+predictors <- c("longitude", "latitude", "construction_year", "extraction_type_group",
+                "quality_group", "quantity", "waterpoint_type", "status_group")
+
+train.subset <- training.data %>% select(predictors)
+
+# Create H2OFrame
+pump.hex <- as.h2o(train.subset, destination_frame="pump.hex")
+
+# Create a 80/20 test/train datasets
+train.test <- h2o.splitFrame(data = pump.hex, ratios = 0.80, seed = 1009)
+pump.train <- train.test[[1]]
+pump.test <- train.test[[2]]
+pump.test.df <- as.data.frame(pump.test)
+
+# Identify the response and predictor variables
+y <- "status_group"
+x <- setdiff(names(train.subset), c(y, "class"))
+print(x)
+```
+\newline
+
+
+# Model 1
+Two hidden layers with 10 nodes each
+```{r model-1}
+# Create the DL model
+pump.fit1 <- h2o.deeplearning(x = x, y = y, training_frame = pump.train, 
+                                model_id = "pump.fit1", hidden = c(200,200,200),
+                                seed = 1009)
+
+# Obtain the predictions from the fitted model
+pump.pred1 <- h2o.predict(pump.fit1, pump.test)
+pump.pred1.df <- as.data.frame(pump.pred1)
+pump.pred1
+
+# Show the confustion matrix with additional performance metrics
+confusionMatrix(pump.pred1.df$predict, pump.test.df$status_group,  mode = "everything")
+```
+\newline
+
+
+
+# Shutdown H2O
+```{r shutdown}
+# Shutdown the cluster
+h2o.shutdown(prompt = FALSE)
+```
