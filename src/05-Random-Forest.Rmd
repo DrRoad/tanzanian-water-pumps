@@ -47,38 +47,14 @@ library(caret)
 
 
 # Load the Datasets
-```{r load-data, cache=TRUE}
-train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
-train.values$permit <- as.character(train.values$permit)
-train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
-train.values$permit <- as.factor(train.values$permit)
-train.values$construction_year[is.na(train.values$construction_year)] <- 0
-train.values$population[is.na(train.values$population)] <- 0
-train.values$scheme_management <- as.character(train.values$scheme_management)
-train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
-train.values$scheme_management <- as.factor(train.values$scheme_management)
-
-train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
-
-# Merge the data values and labels
-training.data <- merge(train.values, train.labels)
-
-# Drop the id attribute
-training.data <- training.data %>% select(-one_of(c("id")))
-
+```{r load-data}
+# Variable name: training.data
+source("./modules/load-training-data.R")
 str(training.data)
 summary(training.data)
 
-test.values <- read.csv("../data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
-test.values$permit <- as.character(test.values$permit)
-test.values$permit[is.na(test.values$permit)] <- "UNKNOWN"
-test.values$permit <- as.factor(test.values$permit)
-test.values$construction_year[is.na(test.values$construction_year)] <- 0
-test.values$population[is.na(test.values$population)] <- 0
-test.values$scheme_management <- as.character(test.values$scheme_management)
-test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
-test.values$scheme_management <- as.factor(test.values$scheme_management)
-
+# Variable name: test.values
+source("./modules/load-test-data.R")
 str(test.values)
 summary(test.values)
 ```
@@ -127,6 +103,8 @@ confusionMatrix(pump.predict.1, pump.test$status_group, mode = "everything")
 # Random Forest Model #2
 Create random forest model using a larger subset of attributes and trees.
 ```{r model-2}
+ptm.start <- proc.time()
+
 pump.model.2 <- randomForest(status_group ~ basin + region + permit + extraction_type_class + quality_group + 
                                quantity + source + waterpoint_type + population + amount_tsh + gps_height + 
                                district_code + scheme_management + payment + longitude + latitude,
@@ -152,6 +130,48 @@ pump.predict.test.2 <- predict(pump.model.2, select(test.values, -id))
 # Create submission for Data Driven
 submission.2 <- data.frame(id = test.values$id, status_group = pump.predict.test.2)
 write.csv(submission.2, file = "../data/random-forest-model-2.csv", row.names=FALSE)
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# Random Forest Model #3
+Create random forest model using 10-fold cross validation.
+```{r model-3}
+ptm.start <- proc.time()
+
+
+pump.model.3 <- train(status_group ~ basin + region + permit + extraction_type_class + quality_group + 
+                 quantity + source + waterpoint_type + population + amount_tsh + gps_height + 
+                 district_code + scheme_management + payment + longitude + latitude, 
+                 data = training.data, method = "rf", trControl = trainControl(method = "cv", number = 10))
+
+
+# Inspect the model
+pump.model.3
+#summary(pump.model.3)
+
+# Examine the importance of the predictor attributes
+varImp(pump.model.3, scale = FALSE)
+plot(pump.model.3, top = 20)
+
+# Use the model to create predictions against the test dataset
+pump.predict.3 <- predict(pump.model.3, select(pump.test, -status_group))
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.3, pump.test$status_group, mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.3 <- predict(pump.model.3, select(test.values, -id))
+
+# Create submission for Data Driven
+submission.3 <- data.frame(id = test.values$id, status_group = pump.predict.test.3)
+write.csv(submission.3, file = "../data/random-forest-model-3.csv", row.names=FALSE)
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
 ```
 
 
