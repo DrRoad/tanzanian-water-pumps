@@ -15,6 +15,10 @@ train.values$construction_year[is.na(train.values$construction_year)] <- 0
 
 train.values$population[is.na(train.values$population)] <- 0
 
+train.values$public_meeting <- as.character(train.values$public_meeting)
+train.values$public_meeting[is.na(train.values$public_meeting)] <- "UNKNOWN"
+train.values$public_meeting <- as.factor(train.values$public_meeting)
+
 train.values$scheme_management <- as.character(train.values$scheme_management)
 train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
 train.values$scheme_management <- as.factor(train.values$scheme_management)

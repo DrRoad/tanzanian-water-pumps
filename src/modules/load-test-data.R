@@ -15,6 +15,10 @@ test.values$construction_year[is.na(test.values$construction_year)] <- 0
 
 test.values$population[is.na(test.values$population)] <- 0
 
+test.values$public_meeting <- as.character(test.values$public_meeting)
+test.values$public_meeting[is.na(test.values$public_meeting)] <- "UNKNOWN"
+test.values$public_meeting <- as.factor(test.values$public_meeting)
+
 test.values$scheme_management <- as.character(test.values$scheme_management)
 test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
 test.values$scheme_management <- as.factor(test.values$scheme_management)
