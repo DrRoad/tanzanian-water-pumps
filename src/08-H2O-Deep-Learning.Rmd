@@ -48,7 +48,7 @@ library(ROCR)
 
 
 # Load the Datasets
-```{r load-data, cache=TRUE}
+```{r load-data}
 # Variable name: training.data
 source("./modules/load-training-data.R")
 str(training.data)
@@ -83,12 +83,14 @@ predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "long
                 "waterpoint_type_group", "status_group")
 
 train.subset <- training.data %>% select(predictors)
+test.subset <- test.values %>% select(predictors[1:32])
 
 # Create H2OFrame
-pump.hex <- as.h2o(train.subset, destination_frame="pump.hex")
+pump.train.hex <- as.h2o(train.subset, destination_frame="pump.train.hex")
+pump.test.hex <- as.h2o(test.subset, destination_frame="pump.test.hex")
 
 # Create a 80/20 test/train datasets
-train.test <- h2o.splitFrame(data = pump.hex, ratios = 0.80, seed = 1009)
+train.test <- h2o.splitFrame(data = pump.train.hex, ratios = 0.80, seed = 1009)
 pump.train <- train.test[[1]]
 pump.test <- train.test[[2]]
 pump.test.df <- as.data.frame(pump.test)
@@ -118,6 +120,14 @@ pump.pred1
 
 # Show the confustion matrix with additional performance metrics
 confusionMatrix(pump.pred1.df$predict, pump.test.df$status_group,  mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.1 <- h2o.predict(pump.fit1, pump.test.hex)
+pump.pred.test1.df <- as.data.frame(pump.predict.test.1)
+
+# Create submission for Data Driven
+submission.1 <- data.frame(id = test.values$id, status_group = pump.pred.test1.df$predict)
+write.csv(submission.1, file = "../data/deep-nn-model-1.csv", row.names=FALSE)
 
 ptm.end <- proc.time() - ptm.start
 ptm.end[3] / 60
@@ -171,6 +181,54 @@ pump.pred3
 
 # Show the confustion matrix with additional performance metrics
 confusionMatrix(pump.pred3.df$predict, pump.test.df$status_group,  mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# Model 4
+Two hundred hidden layers with 200 nodes each, using grid search to find the best model.
+```{r model-4}
+ptm.start <- proc.time()
+
+
+activation_opt <- c("Rectifier", "Maxout", "Tanh")
+l1_opt <- c(0, 0.00001, 0.0001, 0.001, 0.01)
+l2_opt <- c(0, 0.00001, 0.0001, 0.001, 0.01)
+
+hyper_params <- list(activation = activation_opt, l1 = l1_opt, l2 = l2_opt)
+search_criteria <- list(strategy = "RandomDiscrete", max_runtime_secs = 600)
+
+
+splits <- h2o.splitFrame(pump.train, ratios = 0.8, seed = 1)
+
+# Create the DL grid search
+pump.grid1 <- h2o.grid("deeplearning", x = x, y = y,
+                    grid_id = "pump.grid1",
+                    training_frame = splits[[1]],
+                    validation_frame = splits[[2]],
+                    seed = 1009,
+                    hidden = c(200,200,200),
+                    hyper_params = hyper_params,
+                    search_criteria = search_criteria)
+
+# Get the list of models
+dl.grid.perf <- h2o.getGrid(grid_id = "pump.grid1", sort_by = "accuracy", decreasing = TRUE)
+dl.grid.perf
+
+# Select the best model
+best.dl.model.id <- dl.grid.perf@model_ids[[1]]
+pump.fit4 <- h2o.getModel(best.dl.model.id)
+
+# Obtain the predictions from the fitted model
+pump.pred4 <- h2o.predict(pump.fit4, pump.test)
+pump.pred4.df <- as.data.frame(pump.pred4)
+pump.pred4
+
+# Show the confustion matrix with additional performance metrics
+confusionMatrix(pump.pred4.df$predict, pump.test.df$status_group,  mode = "everything")
 
 ptm.end <- proc.time() - ptm.start
 ptm.end[3] / 60
