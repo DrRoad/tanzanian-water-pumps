@@ -49,23 +49,15 @@ library(ROCR)
 
 # Load the Datasets
 ```{r load-data, cache=TRUE}
-train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
-train.values$permit <- as.character(train.values$permit)
-train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
-train.values$permit <- as.factor(train.values$permit)
-train.values$construction_year[is.na(train.values$construction_year)] <- 0
-train.values$population[is.na(train.values$population)] <- 0
-train.values$scheme_management <- as.character(train.values$scheme_management)
-train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
-train.values$scheme_management <- as.factor(train.values$scheme_management)
+# Variable name: training.data
+source("./modules/load-training-data.R")
+str(training.data)
+summary(training.data)
 
-train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
-
-# Merge the data values and labels
-training.data <- merge(train.values, train.labels)
-
-# Drop the id attribute
-training.data <- training.data %>% select(-one_of(c("id")))
+# Variable name: test.values
+source("./modules/load-test-data.R")
+str(test.values)
+summary(test.values)
 ```
 \newline
 
@@ -79,8 +71,16 @@ h2o.no_progress()
 local.h20 <- h2o.init()
 
 
-predictors <- c("longitude", "latitude", "construction_year", "extraction_type_group",
-                "quality_group", "quantity", "waterpoint_type", "status_group")
+# predictors <- c("longitude", "latitude", "construction_year", "extraction_type_group",
+#                 "quality_group", "quantity", "waterpoint_type", "status_group")
+
+predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "longitude", "latitude",
+                "basin", "region", "region_code", "district_code", "lga",  "population", 
+                "public_meeting", "scheme_management", "permit", "construction_year", "extraction_type", 
+                "extraction_type_group", "extraction_type_class", "management", "management_group", 
+                "payment", "payment_type", "water_quality", "quality_group", "quantity", 
+                "quantity_group", "source", "source_type", "source_class", "waterpoint_type", 
+                "waterpoint_type_group", "status_group")
 
 train.subset <- training.data %>% select(predictors)
 
@@ -102,8 +102,10 @@ print(x)
 
 
 # Model 1
-Two hidden layers with 10 nodes each
+Two hundred hidden layers with 200 nodes each
 ```{r model-1}
+ptm.start <- proc.time()
+
 # Create the DL model
 pump.fit1 <- h2o.deeplearning(x = x, y = y, training_frame = pump.train, 
                                 model_id = "pump.fit1", hidden = c(200,200,200),
@@ -116,6 +118,62 @@ pump.pred1
 
 # Show the confustion matrix with additional performance metrics
 confusionMatrix(pump.pred1.df$predict, pump.test.df$status_group,  mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# Model 2
+Two hundred hidden layers with 200 nodes each and early stopping disabled
+```{r model-2}
+ptm.start <- proc.time()
+
+# Create the DL model
+pump.fit2 <- h2o.deeplearning(x = x, y = y, training_frame = pump.train, 
+                                model_id = "pump.fit2", hidden = c(200,200,200),
+                                epochs = 50, stopping_rounds = 0, seed = 1009)
+
+# Obtain the predictions from the fitted model
+pump.pred2 <- h2o.predict(pump.fit2, pump.test)
+pump.pred2.df <- as.data.frame(pump.pred2)
+pump.pred2
+
+# Show the confustion matrix with additional performance metrics
+confusionMatrix(pump.pred2.df$predict, pump.test.df$status_group,  mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# Model 3
+Two hundred hidden layers with 200 nodes each, early stopping enabled with defined stopping criteria
+```{r model-3}
+ptm.start <- proc.time()
+
+# Create the DL model
+pump.fit3 <- h2o.deeplearning(x = x, y = y, training_frame = pump.train, 
+                                model_id = "pump.fit3", hidden = c(200,200,200),
+                                epochs = 50, seed = 1009, 
+                                nfolds = 3,                            #used for early stopping
+                                score_interval = 1,                    #used for early stopping
+                                stopping_rounds = 5,                   #used for early stopping
+                                stopping_metric = "misclassification", #used for early stopping
+                                stopping_tolerance = 1e-3)             #used for early stopping
+
+# Obtain the predictions from the fitted model
+pump.pred3 <- h2o.predict(pump.fit3, pump.test)
+pump.pred3.df <- as.data.frame(pump.pred3)
+pump.pred3
+
+# Show the confustion matrix with additional performance metrics
+confusionMatrix(pump.pred3.df$predict, pump.test.df$status_group,  mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
 ```
 \newline
 
@@ -126,3 +184,7 @@ confusionMatrix(pump.pred1.df$predict, pump.test.df$status_group,  mode = "every
 # Shutdown the cluster
 h2o.shutdown(prompt = FALSE)
 ```
+
+
+# References
+LeDell, E. (2017). H2O Deep Learning. Retrieved from https://github.com/ledell/sldm4-h2o/blob/master/sldm4-deeplearning-h2o.Rmd
