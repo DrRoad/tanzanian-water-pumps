@@ -173,5 +173,50 @@ write.csv(submission.3, file = "../data/random-forest-model-3.csv", row.names=FA
 ptm.end <- proc.time() - ptm.start
 ptm.end[3] / 60
 ```
+\newline
+
+
+# Random Forest Model #4
+Create random forest model using 10-fold cross validation.
+```{r model-4}
+ptm.start <- proc.time()
+
+predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "longitude", "latitude",
+                "basin", "region", "region_code", "district_code", "lga",  "population", 
+                "public_meeting", "scheme_management", "permit", "construction_year", "extraction_type", 
+                "extraction_type_group", "extraction_type_class", "management", "management_group", 
+                "payment", "payment_type", "water_quality", "quality_group", "quantity", 
+                "quantity_group", "source", "source_type", "source_class", "waterpoint_type", 
+                "waterpoint_type_group", "status_group")
+
+train.subset <- training.data %>% select(predictors)
+
+pump.model.4 <- train(status_group ~ ., data = train.subset[1:100, ], method = "rf", trControl = trainControl(method = "cv", number = 10))
+
+
+# Inspect the model
+pump.model.4
+#summary(pump.model.4)
+
+# Examine the importance of the predictor attributes
+varImp(pump.model.4, scale = FALSE)
+plot(pump.model.4, top = 20)
+
+# Use the model to create predictions against the test dataset
+pump.predict.4 <- predict(pump.model.4, select(pump.test, -status_group))
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.4, pump.test$status_group, mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.4 <- predict(pump.model.4, select(test.values, -id))
+
+# Create submission for Data Driven
+submission.4 <- data.frame(id = test.values$id, status_group = pump.predict.test.4)
+write.csv(submission.4, file = "../data/random-forest-model-4.csv", row.names=FALSE)
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
 
 
