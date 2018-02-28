@@ -47,24 +47,16 @@ library(caret)
 
 
 # Load the Datasets
-```{r load-data, cache=TRUE}
-train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
-train.values$permit <- as.character(train.values$permit)
-train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
-train.values$permit <- as.factor(train.values$permit)
-train.values$construction_year[is.na(train.values$construction_year)] <- 0
-train.values$population[is.na(train.values$population)] <- 0
-train.values$scheme_management <- as.character(train.values$scheme_management)
-train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
-train.values$scheme_management <- as.factor(train.values$scheme_management)
+```{r load-data}
+# Variable name: training.data
+source("./modules/load-training-data.R")
+str(training.data)
+summary(training.data)
 
-train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
-
-# Merge the data values and labels
-training.data <- merge(train.values, train.labels)
-
-# Drop the id attribute
-training.data <- training.data %>% select(-one_of(c("id")))
+# Variable name: test.values
+source("./modules/load-test-data.R")
+str(test.values)
+summary(test.values)
 ```
 \newline
 
@@ -94,6 +86,8 @@ test.subset <- pump.test %>% select(predictors)
 # SVM Model #1
 Create SVM model using a subset of attributes.
 ```{r model-1}
+ptm.start <- proc.time()
+
 pump.model.1 <- svm(status_group ~ longitude + latitude + extraction_type_group + construction_year + 
                       quality_group + quantity + waterpoint_type, data=train.subset)
 
@@ -108,4 +102,139 @@ summary(pump.predict.1)
 
 # Evaluate the model using a confusion matrix
 confusionMatrix(table(pump.predict.1, pump.test$status_group), mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
 ```
+\newline
+
+
+# Full set of us usable predictors
+Used by the next two models
+```{r full-predictors}
+# "ward",
+predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "longitude", "latitude",
+                "basin", "region", "region_code", "district_code", "lga",  "population", 
+                "public_meeting", "scheme_management", "permit", "construction_year", "extraction_type", 
+                "extraction_type_group", "extraction_type_class", "management", "management_group", 
+                "payment", "payment_type", "water_quality", "quality_group", "quantity", 
+                "quantity_group", "source", "source_type", "source_class", "waterpoint_type", 
+                "waterpoint_type_group", "status_group")
+
+train.subset <- pump.train %>% select(predictors)
+test.subset <- pump.test %>% select(predictors)
+```
+\newline
+
+
+# SVM Model #2
+Create SVM model using the full set of attributes with a radial kernal.
+```{r model-2}
+ptm.start <- proc.time()
+
+pump.model.2 <- svm(status_group ~ ., data=train.subset, kernel = "radial")
+
+# Inspect the model
+summary(pump.model.2)
+
+# Use the model to create predictions against the test dataset
+pump.predict.2 <- predict(pump.model.2, newdata = select(test.subset, -status_group))
+summary(pump.predict.2)
+
+#pump.predict.2[1] <- "functional needs repair"
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(table(pump.predict.2, pump.test$status_group), mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# SVM Model #3
+Create SVM model using the full set of attributes with a polynomial kernal.
+```{r model-3}
+ptm.start <- proc.time()
+
+pump.model.3 <- svm(status_group ~ ., data=train.subset, kernel = "polynomial")
+
+# Inspect the model
+summary(pump.model.3)
+
+# Use the model to create predictions against the test dataset
+pump.predict.3 <- predict(pump.model.3, newdata = select(test.subset, -status_group))
+summary(pump.predict.3)
+
+#pump.predict.3[1] <- "functional needs repair"
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(table(pump.predict.3, pump.test$status_group), mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# SVM Model #4
+Create SVM model using the full set of attributes with a sigmoid kernal.
+```{r model-4}
+ptm.start <- proc.time()
+
+pump.model.4 <- svm(status_group ~ ., data=train.subset, kernel = "sigmoid")
+
+# Inspect the model
+summary(pump.model.4)
+
+# Use the model to create predictions against the test dataset
+pump.predict.4 <- predict(pump.model.4, newdata = select(test.subset, -status_group))
+summary(pump.predict.4)
+
+#pump.predict.4[1] <- "functional needs repair"
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(table(pump.predict.4, pump.test$status_group), mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
+
+
+# SVM Model #5
+Create SVM model using the full set of attributes with 10-fold cross validation.
+```{r model-5}
+ptm.start <- proc.time()
+
+pump.model.5  <- train(status_group ~ ., data = train.subset, method = "svmRadial", 
+                       trControl = trainControl(method = "cv", number = 10),
+                       tuneLength = 2)
+
+# Inspect the model
+summary(pump.model.5)
+
+# Examine the importance of the predictor attributes
+varImp(pump.model.5, scale = FALSE)
+plot(pump.model.5, top = 20)
+
+# Use the model to create predictions against the test dataset
+pump.predict.5 <- predict(pump.model.5, newdata = select(test.subset, -status_group))
+summary(pump.predict.5)
+
+#pump.predict.5[1] <- "functional needs repair"
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(table(pump.predict.5, pump.test$status_group), mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.5 <- predict(pump.model.5, select(test.values, -id))
+
+# Create submission for Data Driven
+submission.5 <- data.frame(id = test.values$id, status_group = pump.predict.test.5)
+write.csv(submission.5, file = "../data/svm-model-5.csv", row.names=FALSE)
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
+```
+\newline
