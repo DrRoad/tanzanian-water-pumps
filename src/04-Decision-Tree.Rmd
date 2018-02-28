@@ -175,6 +175,8 @@ test.subset <- pump.test %>% select(predictors)
 # Decision Tree Model #4
 Create decision tree model using winnowing for feature selection.
 ```{r, model-4}
+ptm.start <- proc.time()
+
 pump.model.4 <- C5.0(status_group  ~ ., data = train.subset, control = C5.0Control(
   winnow = TRUE, earlyStopping = FALSE))
 
@@ -189,6 +191,16 @@ pump.predict.4 <- predict(pump.model.4, select(test.subset, -status_group))
 
 # Evaluate the model using a confusion matrix
 confusionMatrix(pump.predict.4, test.subset$status_group, mode = "everything")
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.4 <- predict(pump.model.4, select(test.values, -id))
+
+# Create submission for Data Driven
+submission.4 <- data.frame(id = test.values$id, status_group = pump.predict.test.4)
+write.csv(submission.4, file = "../data/decision-tree-model-4.csv", row.names=FALSE)
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
 ```
 \newline
 
@@ -198,10 +210,8 @@ Create decision tree model using caret to tune over the type of model, winnowing
 ```{r, model-5}
 ptm.start <- proc.time()
 
-pump.model.5 <- train(select(train.subset, -status_group), train.subset$status_group, method = "C5.0", tuneLength = 2, 
-               trControl = trainControl(method = "repeatedcv", repeats = 1),
-               ## Other options can be passed thru too, e.g.
-               ## control = C5.0Control(earlyStopping = FALSE) etc.
+pump.model.5 <- train(select(train.subset, -status_group), train.subset$status_group, method = "C5.0", tuneLength = 4, 
+               trControl = trainControl(method = "repeatedcv", repeats = 4),
                metric = "Kappa")
 
 # Inspect the model
