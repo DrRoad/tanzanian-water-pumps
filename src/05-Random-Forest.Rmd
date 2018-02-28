@@ -191,7 +191,7 @@ predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "long
 
 train.subset <- training.data %>% select(predictors)
 
-pump.model.4 <- train(status_group ~ ., data = train.subset[1:100, ], method = "rf", trControl = trainControl(method = "cv", number = 10))
+pump.model.4 <- train(status_group ~ ., data = train.subset, method = "rf", trControl = trainControl(method = "cv", number = 10))
 
 
 # Inspect the model
