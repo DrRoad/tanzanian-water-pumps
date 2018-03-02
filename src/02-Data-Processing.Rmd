@@ -157,6 +157,13 @@ test.values$population[tolower(test.values$population) %in% missing.values] <- N
 
 ## Add new features
 ```{r new-features}
+# Apply log to attributes with outliers
+train.values <- train.values %>% 
+  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
+
+test.values <- test.values %>% 
+  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
+
 
 # Bin the funders
 train.values <- train.values %>% 
@@ -293,7 +300,7 @@ train.values %>% filter(funder.bin == "other") %>%
   arrange(desc(n)) %>% as.data.frame
 
 
-
+# Bin the funders
 test.values <- test.values %>% 
   mutate(funder.bin = case_when(str_detect(tolower(funder), "german") ~ "german", 
                                  str_detect(tolower(funder), "church") ~ "church",  
