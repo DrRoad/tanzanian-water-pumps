@@ -24,3 +24,7 @@ test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
 test.values$scheme_management <- as.factor(test.values$scheme_management)
 
 test.values$wpt_name <- as.character(test.values$wpt_name)
+
+test.values$region_code <- as.factor(test.values$region_code)
+
+test.values$district_code <- as.factor(test.values$district_code)

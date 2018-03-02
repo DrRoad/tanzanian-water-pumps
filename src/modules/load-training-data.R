@@ -25,6 +25,11 @@ train.values$scheme_management <- as.factor(train.values$scheme_management)
 
 train.values$wpt_name <- as.character(train.values$wpt_name)
 
+train.values$region_code <- as.factor(train.values$region_code)
+
+train.values$district_code <- as.factor(train.values$district_code)
+
+
 
 # Load the training labels
 train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
