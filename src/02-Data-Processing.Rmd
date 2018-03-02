@@ -134,6 +134,27 @@ test.values$construction_year <- as.factor(test.values$construction_year)
 \newline
 
 
+## Add new features to address outliers
+```{r new-features-outliers}
+# Apply log to attributes with outliers
+train.values <- train.values %>% 
+  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
+
+test.values <- test.values %>% 
+  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
+
+train.scale <- as.data.frame(scale(train.values[, c("amount_tsh", "population")]))
+test.scale <- as.data.frame(scale(test.values[, c("amount_tsh", "population")]))
+
+names(train.scale) <- c("amount_tsh.scale", "population.scale")
+names(test.scale) <- c("amount_tsh.scale", "population.scale")
+
+train.values <- cbind(train.values, train.scale)
+test.values <- cbind(test.values, test.scale)
+```
+\newline
+
+
 ## Cleanse attribute data
 ```{r data-cleanse}
 missing.values <- c("none", "0", "-")
@@ -155,16 +176,9 @@ test.values$population[tolower(test.values$population) %in% missing.values] <- N
 ```
 \newline
 
-## Add new features
-```{r new-features}
-# Apply log to attributes with outliers
-train.values <- train.values %>% 
-  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
 
-test.values <- test.values %>% 
-  mutate(amount_tsh.log = log(amount_tsh), population.log = log(population))
-
-
+## Add new categorical features
+```{r new-features-categorical}
 # Bin the funders
 train.values <- train.values %>% 
   mutate(funder.bin = case_when(str_detect(tolower(funder), "german") ~ "german", 
