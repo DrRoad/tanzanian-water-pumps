@@ -48,38 +48,14 @@ library(caret)
 
 
 # Load the Datasets
-```{r load-data, cache=TRUE}
-train.values <- read.csv("../data/clean-training-set-values.csv", header = TRUE, na.strings = "NA")
-train.values$permit <- as.character(train.values$permit)
-train.values$permit[is.na(train.values$permit)] <- "UNKNOWN"
-train.values$permit <- as.factor(train.values$permit)
-train.values$construction_year[is.na(train.values$construction_year)] <- 0
-train.values$population[is.na(train.values$population)] <- 0
-train.values$scheme_management <- as.character(train.values$scheme_management)
-train.values$scheme_management[is.na(train.values$scheme_management)] <- "UNKNOWN"
-train.values$scheme_management <- as.factor(train.values$scheme_management)
-
-train.labels <- read.csv("../data/src-training-set-labels.csv", header = TRUE)
-
-# Merge the data values and labels
-training.data <- merge(train.values, train.labels)
-
-# Drop the id attribute
-training.data <- training.data %>% select(-one_of(c("id")))
-
+```{r load-data}
+# Variable name: training.data
+source("./modules/load-training-data.R")
 str(training.data)
 summary(training.data)
 
-test.values <- read.csv("../data/clean-test-set-values.csv", header = TRUE, na.strings = "NA")
-test.values$permit <- as.character(test.values$permit)
-test.values$permit[is.na(test.values$permit)] <- "UNKNOWN"
-test.values$permit <- as.factor(test.values$permit)
-test.values$construction_year[is.na(test.values$construction_year)] <- 0
-test.values$population[is.na(test.values$population)] <- 0
-test.values$scheme_management <- as.character(test.values$scheme_management)
-test.values$scheme_management[is.na(test.values$scheme_management)] <- "UNKNOWN"
-test.values$scheme_management <- as.factor(test.values$scheme_management)
-
+# Variable name: test.values
+source("./modules/load-test-data.R")
 str(test.values)
 summary(test.values)
 ```
@@ -138,5 +114,53 @@ pump.predict.1 <- predict(pump.model.1, newdata = test.sparse.matrix)
 
 # Evaluate the model using a confusion matrix
 confusionMatrix(pump.predict.1, test.output.vector, mode = "everything")
+```
+\newline
+
+
+# Full set of us usable predictors
+Used by the next two models
+```{r full-predictors}
+# "ward",
+predictors <- c("amount_tsh", "funder.bin", "gps_height", "installer.bin", "longitude", "latitude",
+                "basin", "region", "region_code", "district_code", "lga", "population", 
+                "public_meeting", "scheme_management", "permit", "construction_year", "extraction_type", 
+                "extraction_type_group", "extraction_type_class", "management", "management_group", 
+                "payment", "payment_type", "water_quality", "quality_group", "quantity", 
+                "quantity_group", "source", "source_type", "source_class", "waterpoint_type", 
+                "waterpoint_type_group", "status_group")
+
+train.subset <- pump.train %>% select(predictors)
+train.sparse.matrix <- sparse.model.matrix(status_group ~ .-1, data = train.subset)
+train.output.vector <- ifelse(train.subset$status_group == "functional", 0, 
+                        ifelse(train.subset$status_group == "non functional", 1, 2))
+
+test.subset <- pump.test %>% select(predictors)
+test.sparse.matrix <- sparse.model.matrix(status_group ~ .-1, data = test.subset)
+test.output.vector <- ifelse(test.subset$status_group == "functional", 0, 
+                        ifelse(test.subset$status_group == "non functional", 1, 2))
+```
+\newline
+
+
+# XGBoost Model #2
+Create xgboost model using a full set attributes.
+```{r model-2}
+ptm.start <- proc.time()
+
+pump.model.2 <- xgboost(data = train.sparse.matrix, label = train.output.vector, max_depth = 15, eta = 0.3,
+                        nrounds = 100, num_class = 3, objective = "multi:softmax")
+
+# Examine the importance of the predictor attributes
+importance <- xgb.importance(feature_names = colnames(train.sparse.matrix), model = pump.model.2); importance
+
+# Use the model to create predictions against the test dataset
+pump.predict.2 <- predict(pump.model.2, newdata = test.sparse.matrix)
+
+# Evaluate the model using a confusion matrix
+confusionMatrix(pump.predict.2, test.output.vector, mode = "everything")
+
+ptm.end <- proc.time() - ptm.start
+ptm.end[3] / 60
 ```
 \newline
