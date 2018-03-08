@@ -139,6 +139,9 @@ test.subset <- pump.test %>% select(predictors)
 test.sparse.matrix <- sparse.model.matrix(status_group ~ .-1, data = test.subset)
 test.output.vector <- ifelse(test.subset$status_group == "functional", 0, 
                         ifelse(test.subset$status_group == "non functional", 1, 2))
+
+test.value.subset <- test.values %>% select(predictors[1:length(predictors) - 1])
+test.value.sparse.matrix <- sparse.model.matrix(~ ., data = test.value.subset)
 ```
 \newline
 
@@ -159,6 +162,17 @@ pump.predict.2 <- predict(pump.model.2, newdata = test.sparse.matrix)
 
 # Evaluate the model using a confusion matrix
 confusionMatrix(pump.predict.2, test.output.vector, mode = "everything")
+
+
+# Use the model to create predictions against the real test dataset
+pump.predict.test.2 <- predict(pump.model.2, test.value.sparse.matrix)
+
+# Create submission for Data Driven
+submission.2 <- data.frame(id = test.values$id, status_group = pump.predict.test.2)
+submission.2$status_group <- ifelse(submission.2$status_group == 0, "functional", 
+                                    ifelse(submission.2$status_group == 1, "non functional", 
+                                           "functional needs repair"))
+write.csv(submission.2, file = "../data/xgboost-model-2.csv", row.names=FALSE)
 
 ptm.end <- proc.time() - ptm.start
 ptm.end[3] / 60
