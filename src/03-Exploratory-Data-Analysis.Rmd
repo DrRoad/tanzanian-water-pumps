@@ -320,5 +320,6 @@ ggplot(training.data, aes(x = gps_height)) +
 
 
 # References
-Wikimedia Commons. (2012). Tanzania regions. Retrieved from https://commons.wikimedia.org/wiki/File:Tanzania_regions.svg
+Kahle, D., & Wickham, H. (2013). ggmap: Spatial Visualization with ggplot2. Retrieved from https://journal.r-project.org/archive/2013-1/kahle-wickham.pdf
 
+Wikimedia Commons. (2012). Tanzania regions. Retrieved from https://commons.wikimedia.org/wiki/File:Tanzania_regions.svg
