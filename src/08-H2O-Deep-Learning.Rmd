@@ -104,7 +104,7 @@ print(x)
 
 
 # Model 1
-Two hundred hidden layers with 200 nodes each
+Three hidden layers with 200 nodes each
 ```{r model-1}
 ptm.start <- proc.time()
 
@@ -136,7 +136,7 @@ ptm.end[3] / 60
 
 
 # Model 2
-Two hundred hidden layers with 200 nodes each and early stopping disabled
+Three hidden layers with 200 nodes each and early stopping disabled
 ```{r model-2}
 ptm.start <- proc.time()
 
@@ -160,7 +160,7 @@ ptm.end[3] / 60
 
 
 # Model 3
-Two hundred hidden layers with 200 nodes each, early stopping enabled with defined stopping criteria
+Three hidden layers with 200 nodes each, early stopping enabled with defined stopping criteria
 ```{r model-3}
 ptm.start <- proc.time()
 
@@ -189,7 +189,7 @@ ptm.end[3] / 60
 
 
 # Model 4
-Two hundred hidden layers with 200 nodes each, using grid search to find the best model.
+Three hidden layers with 200 nodes each, using grid search to find the best model.
 ```{r model-4}
 ptm.start <- proc.time()
 
