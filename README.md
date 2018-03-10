@@ -40,4 +40,5 @@ The complete source for this project is available below.  The source data for th
 
 ## Presentation
 * [Slide Deck](presentation/TSkowronek_MSDS692_Presentation.pdf)
-* [Narrated Presentation](https://youtu.be/RE52IcqRRUQ)
+* Narrated Presentation:
+[![Narrated Presentation](images/video-presentation.png)](https://youtu.be/RE52IcqRRUQ)
