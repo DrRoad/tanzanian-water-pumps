@@ -1,5 +1,13 @@
 # Predicting the Operational Status of Tanzanian Water Pumps
-Data mining the water table: Predicting the operating condition of a water points in Tanzania
+**By:** Thomas Skowronek
+**Program:** M.S. Data Science - Regis University
+**Course:** MSDS-692 Data Science Practicum I
+
+
+## Project Overview
+Most citizens take the ease of accessibility to drinking water for granted.  However, in some parts of the world, drinking water is a scarce commodity.  An article published in Time Magazine in January 2018 states that Cape Town, South Africa is 90 days away from running out of water.   Given this critical social issue, I found the organization DrivenData, which is hosting a data science competition to detect the operational status of water pumps in Tanzanian.  The name of the competition is "[Pump it Up: Data Mining the Water Table](https://www.drivendata.org/competitions/7/pump-it-up-data-mining-the-water-table/)".
+
+My goal for this project is to use the R language and apply the water pump data to multiple classification algorithms.  The classification models will be evaluated to determine, which algorithm and set of model parameters are able to maximize the classification rate according to the evaluation metric for the competition and correctly classify the status of the water pumps.
 
 
 ## Source Code
