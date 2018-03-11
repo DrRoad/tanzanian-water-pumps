@@ -22,6 +22,14 @@ Given that the DrivenData challenge is focused on classification correctness, I 
 * Deep Neural Network
 
 
+# Data Type and Characteristics
+The data is provided by Taarifa, which is an open source web API platform aimed at closing citizen feedback loops, and the Tanzanian Ministry of Water.  The datasets include:
+
+* Training Set - consisting of 59,400 observations and 40 numeric and categorical variables
+* Training Labels - comprising of 59,400 observations and two variables
+* Test Set - containing 14,850 observations and 40 numeric and categorical variables
+
+
 ## Source Code
 The complete source for this project is available below.  The source data for the project is not included.  However, the data ingest R Notebook will download the dataset from AWS S3.
 
