@@ -12,7 +12,7 @@ Most citizens take the ease of accessibility to drinking water for granted.  How
 ## Project Goal
 My goal for this project is to use the R language and apply the water pump data to multiple classification algorithms.  The classification models will be evaluated to determine, which algorithm and set of model parameters are able to maximize the classification rate according to the evaluation metric for the competition and correctly classify the status of the water pumps.
 
-### Classification Algorithms
+## Classification Algorithms
 Given that the DrivenData challenge is focused on classification correctness, I selected algorithms that favor accuracy over speed to minimize the misclassification rate in my models.
 
 * Decision Tree
@@ -22,7 +22,7 @@ Given that the DrivenData challenge is focused on classification correctness, I 
 * Deep Neural Network
 
 
-# Data Type and Characteristics
+## Data Type and Characteristics
 The data is provided by Taarifa, which is an open source web API platform aimed at closing citizen feedback loops, and the Tanzanian Ministry of Water.  The datasets include:
 
 * Training Set - consisting of 59,400 observations and 40 numeric and categorical variables
@@ -48,5 +48,5 @@ The complete source for this project is available below.  The source data for th
 
 ## Presentation
 * [Slide Deck](presentation/TSkowronek_MSDS692_Presentation.pdf)
-* Narrated Presentation:
+* [Narrated Presentation](https://youtu.be/RE52IcqRRUQ):
 [![Narrated Presentation](images/video-presentation.png)](https://youtu.be/RE52IcqRRUQ)
